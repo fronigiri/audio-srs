@@ -1,0 +1,6 @@
+# Binaries
+my-project
+*.exe
+
+# Environment files
+.env
