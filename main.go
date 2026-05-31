@@ -18,4 +18,5 @@ func main() {
 	if err := db.Ping(); err != nil {
 		log.Fatal(err)
 	}
+
 }

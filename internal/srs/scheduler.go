@@ -29,5 +29,4 @@ func review(card *Card, rating int) {
 	generateInterval(card, rating)
 	card.Repetition++
 	generateEase(card, rating)
-
 }
