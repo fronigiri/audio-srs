@@ -6,8 +6,10 @@ import (
 
 func testScheduler(t *testing.T) {
 	cases := []struct {
-		card   Card
-		rating int
+		card        Card
+		rating      int
+		expectedRep int
+		expectedEF  int
 	}{
 		// normal test
 		{
