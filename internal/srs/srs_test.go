@@ -25,18 +25,20 @@ func testScheduler(t *testing.T) {
 			expectedInterval: 1,
 			expectedEF:
 		},
-		// ease factor below 1.3
+		// ease factor below 1.3. Should be 1.3
 		{
 			card:   Card{Repetition: 5, Interval: 1, EF: 0.9},
 			rating: 3,
-			
+			expectedInterval:
+			expectedEF: 1.3
+
 		},
 		//first successful review should be 1 day
 		{
-			card:   Card{Repetition: 0, Interval: 1, EF: 0.9},
+			card:   Card{Repetition: 0, Interval: 1, EF: 1.3},
 			rating: 3,
 			expectedInterval: 1,
-			expectedEF:
+			expectedEF: 2.5
 		},
 		//second successful review should be 6 days
 		{
