@@ -45,7 +45,7 @@ func testScheduler(t *testing.T) {
 			card:   Card{Repetition: 1, Interval: 1, EF: 0.9},
 			rating: 3,
 			expectedInterval: 6,
-			expectedEF:
+			expectedEF: 1.3
 		},
 	}
 	for _, c := range cases{
