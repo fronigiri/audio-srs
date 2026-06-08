@@ -49,6 +49,10 @@ func testScheduler(t *testing.T) {
 	}
 	for _, c := range cases {
 		review(&c.card, c.rating)
+		if c.expectedEF != c.card.EF {
+			t.Errorf("Error: The expected EF is not the same. Expected: %v, Given: %v", c.expectedEF, c.card.EF)
+
+		}
 
 	}
 }
