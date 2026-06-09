@@ -51,7 +51,9 @@ func testScheduler(t *testing.T) {
 		review(&c.card, c.rating)
 		if c.expectedEF != c.card.EF {
 			t.Errorf("Error: The expected EF is not the same. Expected: %v, Given: %v", c.expectedEF, c.card.EF)
-
+		}
+		if c.expectedInterval != c.card.Interval {
+			t.Errorf("Error: The expected interval is not the same. Expected: %d, Given: %d", c.expectedInterval, c.card.Interval)
 		}
 
 	}
