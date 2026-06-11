@@ -46,6 +46,13 @@ func testScheduler(t *testing.T) {
 			expectedInterval: 6,
 			expectedEF:       1.3,
 		},
+		//review after second rep
+		{
+			card:             Card{Repetition: 2, Interval: 6, EF: 1.3},
+			rating:           3,
+			expectedInterval: 8,
+			expectedEF:       1.3,
+		},
 	}
 	for _, c := range cases {
 		review(&c.card, c.rating)
