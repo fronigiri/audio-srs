@@ -1,22 +1,15 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/fronigiri/audio-srs/internal/database"
 )
 
 func main() {
-	db, err := sql.Open("sqlite3", "./myapp.db")
+	db, err := database.StartDB()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
-
-	// Verify the connection
-	if err := db.Ping(); err != nil {
-		log.Fatal(err)
-	}
-
 }

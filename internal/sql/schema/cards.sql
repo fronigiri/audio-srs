@@ -5,4 +5,5 @@ CREATE TABLE IF NOT EXISTS cards (
     ease_factor REAL NOT NULL DEFAULT 2.5,   -- SM-2 algorithm factor
     due_date    TEXT NOT NULL,               -- ISO 8601 date string
     created_at  TEXT NOT NULL
+    FOREIGN KEY (deck_id) REFERENCES decks(id)
 );
