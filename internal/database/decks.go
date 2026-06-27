@@ -22,3 +22,8 @@ func (db *DB) CreateDeck(d Deck) error {
 	)
 	return err
 }
+
+func (db *DB) RemoveDeck(id int) error {
+	_, err := db.conn.Exec("DELETE FROM decks WHERE id = ?", id)
+	return err
+}
