@@ -1,28 +1,52 @@
 package audio
 
 import (
-	"log"
 	"os"
 	"time"
 
-	"github.com/fronigiri/audio-srs/internal/database"
+	"github.com/gopxl/beep"
 	"github.com/gopxl/beep/mp3"
 	"github.com/gopxl/beep/speaker"
+
+	"github.com/fronigiri/audio-srs/internal/database"
 )
 
-func PlayCard(c database.Card) {
-	f, err := os.Open(c.AudioPath)
-	if err != nil {
-		log.Fatal(err)
+type Player struct {
+	Open   func(string) (*os.File, error)
+	Decode func(*os.File) (beep.StreamSeekCloser, beep.Format, error)
+	Play   func(beep.StreamSeekCloser, beep.Format) error
+}
+
+func NewPlayer() Player {
+	return Player{
+		Open: os.Open,
+		Decode: func(f *os.File) (beep.StreamSeekCloser, beep.Format, error) {
+			return mp3.Decode(f)
+		},
+		Play: func(streamer beep.StreamSeekCloser, format beep.Format) error {
+			speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
+			done := make(chan bool)
+			speaker.Play(beep.Seq(streamer, beep.Callback(func() {
+				done <- true
+			})))
+			<-done
+			return nil
+		},
 	}
-	streamer, format, err := mp3.Decode(f)
+}
+
+func (p Player) PlayCard(c database.Card) error {
+	f, err := p.Open(c.AudioPath)
 	if err != nil {
-		log.Fatal(err)
+		return err
+	}
+	defer f.Close()
+
+	streamer, format, err := p.Decode(f)
+	if err != nil {
+		return err
 	}
 	defer streamer.Close()
 
-	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
-
-	speaker.Play(streamer)
-
+	return p.Play(streamer, format)
 }

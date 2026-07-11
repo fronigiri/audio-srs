@@ -4,3 +4,6 @@ my-project
 
 # Environment files
 .env
+
+#Test audio files
+media/
