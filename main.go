@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"fyne.io/fyne/v2"
@@ -15,6 +14,15 @@ import (
 	"github.com/fronigiri/audio-srs/internal/database"
 )
 
+func chooseFolder(cfg *Config, w fyne.Window) {
+	dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
+		if err != nil || uri == nil {
+			return
+		}
+		cfg.LibraryPath = uri.Path()
+	}, w)
+}
+
 func main() {
 	db, err := database.StartDB()
 	if err != nil {
@@ -25,14 +33,10 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("Audio SRS")
 	w.Resize(fyne.NewSize(600, 600))
+	cfg := NewConfig()
 
 	button := widget.NewButtonWithIcon("Choose Library Path...", theme.FileIcon(), func() {
-		dialog.ShowFolderOpen(func(rc fyne.ListableURI, err error) {
-			if err != nil || rc == nil {
-				return
-			}
-			fmt.Println(rc.Path())
-		}, w)
+		chooseFolder(cfg, w)
 	})
 
 	button2 := widget.NewButton(
