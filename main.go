@@ -37,7 +37,7 @@ func main() {
 
 	button2 := widget.NewButton(
 		"Click me",
-		func() { println("Six Seven!") },
+		func() { println("Five Seven!") },
 	)
 	sidebar := container.New(layout.NewGridLayoutWithColumns(2), button, button2)
 	content := container.New(layout.NewVBoxLayout(), sidebar)
