@@ -40,10 +40,10 @@ func main() {
 	})
 
 	button2 := widget.NewButton(
-		"Click me",
+		"Decks",
 		func() { println("Five Seven!") },
 	)
-	sidebar := container.New(layout.NewGridLayoutWithColumns(2), button, button2)
+	sidebar := container.New(layout.NewGridLayoutWithRows(2), button, button2)
 	content := container.New(layout.NewVBoxLayout(), sidebar)
 
 	w.SetContent(content)
