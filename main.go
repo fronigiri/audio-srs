@@ -41,7 +41,7 @@ func main() {
 
 	button2 := widget.NewButton(
 		"Decks",
-		func() { println("Pressed.") },
+		func() { println("Deck Button") },
 	)
 	sidebar := container.New(layout.NewGridLayoutWithRows(2), button, button2)
 	content := container.New(layout.NewVBoxLayout(), sidebar)
