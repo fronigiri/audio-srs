@@ -51,3 +51,7 @@ func main() {
 	w.ShowAndRun()
 
 }
+
+func ShowHomePage(w fyne.Window) {}
+
+func ShowPageTwo(w fyne.Window) {}
