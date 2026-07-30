@@ -34,7 +34,12 @@ func main() {
 	w := a.NewWindow("Audio SRS")
 	w.Resize(fyne.NewSize(600, 600))
 	cfg := NewConfig()
+	ShowHomePage(w, cfg)
+	w.ShowAndRun()
 
+}
+
+func ShowHomePage(w fyne.Window, cfg *Config) {
 	button := widget.NewButtonWithIcon("Choose Library Path...", theme.FileIcon(), func() {
 		chooseFolder(cfg, w)
 	})
@@ -47,11 +52,8 @@ func main() {
 	content := container.New(layout.NewVBoxLayout(), sidebar)
 
 	w.SetContent(content)
-
-	w.ShowAndRun()
-
 }
 
-func ShowHomePage(w fyne.Window) {}
+func ShowPageTwo(w fyne.Window) {
 
-func ShowPageTwo(w fyne.Window) {}
+}
