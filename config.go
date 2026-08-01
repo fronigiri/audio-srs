@@ -9,3 +9,7 @@ func NewConfig() *Config {
 		LibraryPath: "./library",
 	}
 }
+
+func SaveConfig(cfg *Config) {
+
+}

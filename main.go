@@ -54,6 +54,6 @@ func ShowHomePage(w fyne.Window, cfg *Config) {
 	w.SetContent(content)
 }
 
-func ShowPageTwo(w fyne.Window) {
+func ShowPageTwo(w fyne.Window, cfg *Config) {
 
 }
