@@ -54,6 +54,11 @@ func ShowHomePage(w fyne.Window, cfg *Config) {
 	w.SetContent(content)
 }
 
-func ShowPageTwo(w fyne.Window, cfg *Config) {
+func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
+	//Display available decks and create new decks
+	button := widget.NewButton("Create New Deck", func() {
+		d := database.Deck{}
+		db.CreateDeck(d)
+	})
 
 }
