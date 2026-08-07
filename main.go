@@ -59,6 +59,8 @@ func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 	button := widget.NewButton("Create New Deck", func() {
 		d := database.Deck{}
 		db.CreateDeck(d)
-	})
-
+	},
+	)
+	content := container.New(layout.NewCenterLayout(), button)
+	w.SetContent(content)
 }
