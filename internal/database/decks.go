@@ -28,6 +28,28 @@ func (db *DB) RemoveDeck(id int) error {
 	return err
 }
 
-func (db *DB) GetDeckList() error {
-	return nil
+func (db *DB) GetDeckList() ([]string, error) {
+	rows, err := db.conn.Query(`
+		SELECT name FROM decks
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var decks []string
+
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		decks = append(decks, name)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return decks, nil
 }
