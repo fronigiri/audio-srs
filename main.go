@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"fyne.io/fyne/v2"
@@ -59,6 +60,10 @@ func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 	decks, err := db.GetDeckList()
 	if err != nil {
 		log.Println("Error: unable to list available decks deck list")
+	}
+	for _, deck := range decks {
+		fmt.Println(deck)
+
 	}
 
 	button := widget.NewButton("Create New Deck", func() {
