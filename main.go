@@ -56,7 +56,7 @@ func ShowHomePage(w fyne.Window, cfg *Config) {
 }
 
 func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
-	//Display available decks and create new decks
+
 	decks, err := db.GetDeckList()
 	if err != nil {
 		log.Println("Error: unable to list available decks deck list")
@@ -73,4 +73,9 @@ func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 	)
 	content := container.New(layout.NewCenterLayout(), button)
 	w.SetContent(content)
+}
+
+func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
+	//Song browsing page
+
 }
