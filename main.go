@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
+	"github.com/fronigiri/audio-srs/internal/audio"
 	"github.com/fronigiri/audio-srs/internal/database"
 )
 
@@ -49,7 +50,11 @@ func ShowHomePage(w fyne.Window, cfg *Config) {
 		"Decks",
 		func() { println("Deck Button") },
 	)
-	sidebar := container.New(layout.NewGridLayoutWithRows(2), button, button2)
+	button3 := widget.NewButton(
+		"Browse Library",
+		func() { println("Library Button") },
+	)
+	sidebar := container.New(layout.NewGridLayoutWithRows(3), button, button2, button3)
 	content := container.New(layout.NewVBoxLayout(), sidebar)
 
 	w.SetContent(content)
@@ -77,5 +82,6 @@ func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 
 func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 	//Song browsing page
+	audio.SongBrowser(cfg.LibraryPath)
 
 }
