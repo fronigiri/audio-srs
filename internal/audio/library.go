@@ -43,7 +43,7 @@ func SongBrowser(library string) error {
 			m, err := tag.ReadFrom(file)
 			if err != nil {
 				// Failed to read tags; skip or handle gracefully
-				return nil
+				return err
 			}
 
 			albumName := m.Album()
