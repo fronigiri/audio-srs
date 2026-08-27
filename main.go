@@ -87,6 +87,6 @@ func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 }
 
 func ShowPageFour(w fyne.Window, cfg *Config, db database.DB) {
-	//Show this page when actually running the review
+	return
 
 }
