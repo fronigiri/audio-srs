@@ -86,7 +86,19 @@ func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 
 }
 
-func ShowPageFour(w fyne.Window, cfg *Config, db database.DB) {
+func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
+	//Run the audio SRS
+
+	//Make new player
+	p := audio.NewPlayer()
+
+	//get cards from deck
+	db.GetNextDueCard(deckID)
+
+	//play card
+
+	//schedule said card
+
 	return
 
 }
