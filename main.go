@@ -99,6 +99,8 @@ func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
 
 	//schedule said card
 
+	//continue into no cards due
+
 	return
 
 }
