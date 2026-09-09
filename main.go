@@ -93,9 +93,13 @@ func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
 	p := audio.NewPlayer()
 
 	//get cards from deck
-	db.GetNextDueCard(deckID)
+	card, err := db.GetNextDueCard(deckID)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	//play card
+	p.PlayCard(card)
 
 	//schedule said card
 
