@@ -27,7 +27,7 @@ func generateInterval(card *database.Card, rating int) {
 	}
 }
 
-func review(card *database.Card, rating int) {
+func Review(card *database.Card, rating int) {
 	generateInterval(card, rating)
 	card.Repetition++
 	generateEase(card, rating)

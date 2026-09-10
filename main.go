@@ -14,6 +14,7 @@ import (
 
 	"github.com/fronigiri/audio-srs/internal/audio"
 	"github.com/fronigiri/audio-srs/internal/database"
+	"github.com/fronigiri/audio-srs/internal/srs"
 )
 
 func chooseFolder(cfg *Config, w fyne.Window) {
@@ -98,10 +99,29 @@ func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
 		log.Fatal(err)
 	}
 
-	//play card
+	//play card and get rating
 	p.PlayCard(card)
+	rating := 3
+	button := widget.NewButton(
+		"Again",
+		func() { rating = 1 },
+	)
+	button2 := widget.NewButton(
+		"Hard",
+		func() { rating = 2 },
+	)
+	button3 := widget.NewButton(
+		"Good",
+		func() { rating = 3 },
+	)
+	button4 := widget.NewButton(
+		"Easy",
+		func() { rating = 4 },
+	)
+	container.New(layout.NewGridLayoutWithRows(4), button, button2, button3, button4)
 
 	//schedule said card
+	srs.Review(&card, rating)
 
 	//continue into no cards due
 
