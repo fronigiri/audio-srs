@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -94,37 +95,38 @@ func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
 	p := audio.NewPlayer()
 
 	//get cards from deck
-	card, err := db.GetNextDueCard(deckID)
-	if err != nil {
-		log.Fatal(err)
+	for {
+		card, err := db.GetNextDueCard(deckID)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if card.DueDate.Day() != time.Now().Day() {
+			break
+		}
+		//play card and get rating
+		p.PlayCard(card)
+		rating := 3
+		button := widget.NewButton(
+			"Again",
+			func() { rating = 1 },
+		)
+		button2 := widget.NewButton(
+			"Hard",
+			func() { rating = 2 },
+		)
+		button3 := widget.NewButton(
+			"Good",
+			func() { rating = 3 },
+		)
+		button4 := widget.NewButton(
+			"Easy",
+			func() { rating = 4 },
+		)
+		container.New(layout.NewGridLayoutWithRows(4), button, button2, button3, button4)
+
+		//schedule said card
+		srs.Review(&card, rating)
+
+		//continue until no cards are due
 	}
-
-	//play card and get rating
-	p.PlayCard(card)
-	rating := 3
-	button := widget.NewButton(
-		"Again",
-		func() { rating = 1 },
-	)
-	button2 := widget.NewButton(
-		"Hard",
-		func() { rating = 2 },
-	)
-	button3 := widget.NewButton(
-		"Good",
-		func() { rating = 3 },
-	)
-	button4 := widget.NewButton(
-		"Easy",
-		func() { rating = 4 },
-	)
-	container.New(layout.NewGridLayoutWithRows(4), button, button2, button3, button4)
-
-	//schedule said card
-	srs.Review(&card, rating)
-
-	//continue into no cards due
-
-	return
-
 }
