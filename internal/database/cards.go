@@ -14,6 +14,7 @@ type Card struct {
 	EF         float64
 	DueDate    time.Time
 	CreatedAt  time.Time
+	DeckID     int
 }
 
 func NewCard(audioPath string) Card {
@@ -27,15 +28,16 @@ func NewCard(audioPath string) Card {
 	}
 }
 
-func (db *DB) InsertCard(c Card) error {
+func (db *DB) InsertCard(c Card, deckID int) error {
 	_, err := db.conn.Exec(`
-        INSERT INTO cards (audio_path, interval, ease_factor, due_date, created_at)
-        VALUES (?, ?, ?, ?, ?)`,
+        INSERT INTO cards (audio_path, interval, ease_factor, due_date, created_at, deck_id)
+        VALUES (?, ?, ?, ?, ?, ?)`,
 		c.AudioPath,
 		c.Interval,
 		c.EF,
 		c.DueDate.Format(time.RFC3339),
 		c.CreatedAt.Format(time.RFC3339),
+		deckID,
 	)
 	return err
 }
