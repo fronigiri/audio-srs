@@ -38,7 +38,7 @@ func main() {
 	w := a.NewWindow("Audio SRS")
 	w.Resize(fyne.NewSize(600, 600))
 	cfg := NewConfig()
-	ShowHomePage(w, cfg)
+	ShowPageThree(w, cfg, *db)
 	w.ShowAndRun()
 
 }
