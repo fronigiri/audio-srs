@@ -34,7 +34,7 @@ func main() {
 	}
 	defer db.Close()
 
-	a := app.New()
+	a := app.NewWithID("com.fronigiri.audio-srs")
 	w := a.NewWindow("Audio SRS")
 	w.Resize(fyne.NewSize(600, 600))
 	cfg := NewConfig()
@@ -83,9 +83,78 @@ func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 }
 
 func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
-	//Song browsing page
-	audio.SongBrowser(cfg.LibraryPath)
+	player := audio.NewPlayer()
+	// 1. Scan your files
+	albums, err := audio.ScanLibrary("./library")
+	if err != nil {
+		log.Fatalf("Error loading music: %v", err)
+	}
 
+	// 2. Prepare the album keys list
+	albumNames := make([]string, 0, len(albums))
+	for name := range albums {
+		albumNames = append(albumNames, name)
+	}
+
+	// 3. Fyne Window setup
+	w.Resize(fyne.NewSize(750, 450))
+
+	var currentSongs []audio.Song
+
+	// Right list: Songs in selected album
+	songList := widget.NewList(
+		func() int {
+			return len(currentSongs)
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("Song Title")
+		},
+		func(id widget.ListItemID, obj fyne.CanvasObject) {
+			s := currentSongs[id]
+			obj.(*widget.Label).SetText(fmt.Sprintf("%s - %s", s.Title, s.Artist))
+		},
+	)
+
+	// Action when clicking a song: Play
+	songList.OnSelected = func(id widget.ListItemID) {
+		selectedSong := currentSongs[id]
+		player.Stop()
+		go func() {
+			err := player.PlaySong(selectedSong)
+			if err != nil {
+				log.Printf("Error playing %s: %v", selectedSong.Title, err)
+			}
+
+		}()
+	}
+
+	// Left list: Albums
+	albumList := widget.NewList(
+		func() int {
+			return len(albumNames)
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("Album Name")
+		},
+		func(id widget.ListItemID, obj fyne.CanvasObject) {
+			obj.(*widget.Label).SetText(albumNames[id])
+		},
+	)
+
+	// Action when clicking an album: Update the song list
+	albumList.OnSelected = func(id widget.ListItemID) {
+		selectedAlbum := albumNames[id]
+		currentSongs = albums[selectedAlbum]
+		songList.UnselectAll()
+		songList.Refresh()
+	}
+
+	// Put album list on the left, song list on the right
+	splitView := container.NewHSplit(albumList, songList)
+	splitView.SetOffset(0.35)
+
+	w.SetContent(splitView)
+	w.ShowAndRun()
 }
 
 func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
@@ -103,6 +172,10 @@ func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
 		if card.DueDate.Day() != time.Now().Day() {
 			break
 		}
+
+		//stop card audio before playing the next one
+		p.Stop()
+
 		//play card and get rating
 		p.PlayCard(card)
 		rating := 3

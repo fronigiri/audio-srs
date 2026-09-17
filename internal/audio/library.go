@@ -1,8 +1,6 @@
 package audio
 
 import (
-	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -16,11 +14,7 @@ type Song struct {
 	Path   string
 }
 
-func SongBrowser(library string) error {
-
-	libraryPath := library
-
-	// Map to group songs by Album name: map[AlbumName][]Song
+func ScanLibrary(libraryPath string) (map[string][]Song, error) {
 	albums := make(map[string][]Song)
 
 	err := filepath.Walk(libraryPath, func(path string, info os.FileInfo, err error) error {
@@ -28,22 +22,17 @@ func SongBrowser(library string) error {
 			return err
 		}
 
-		// Process only audio files (e.g., .mp3, .flac, .m4a)
 		ext := filepath.Ext(path)
 		if ext == ".mp3" || ext == ".flac" || ext == ".m4a" {
-
-			// 1. Open the file handle
 			file, err := os.Open(path)
 			if err != nil {
-				return err
+				return nil // Skip files we cannot open
 			}
 			defer file.Close()
 
-			// 2. Read metadata tags from the open file
 			m, err := tag.ReadFrom(file)
 			if err != nil {
-				// Failed to read tags; skip or handle gracefully
-				return err
+				return nil // Skip files with unreadable tags
 			}
 
 			albumName := m.Album()
@@ -58,22 +47,14 @@ func SongBrowser(library string) error {
 				Path:   path,
 			}
 
-			// 3. Add to the album bucket
 			albums[albumName] = append(albums[albumName], song)
 		}
 		return nil
 	})
 
 	if err != nil {
-		log.Fatalf("Error scanning library: %v", err)
+		return nil, err
 	}
 
-	// Print out the grouped results
-	for album, songs := range albums {
-		fmt.Printf("Album: %s (%d tracks)\n", album, len(songs))
-		for _, s := range songs {
-			fmt.Printf("  - %s by %s\n", s.Title, s.Artist)
-		}
-	}
-	return nil
+	return albums, nil
 }

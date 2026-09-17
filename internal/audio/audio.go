@@ -1,7 +1,9 @@
 package audio
 
 import (
+	"context"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/gopxl/beep"
@@ -15,6 +17,8 @@ type Player struct {
 	Open   func(string) (*os.File, error)
 	Decode func(*os.File) (beep.StreamSeekCloser, beep.Format, error)
 	Play   func(beep.StreamSeekCloser, beep.Format) error
+	Cancel context.CancelFunc
+	Mu     sync.Mutex
 }
 
 func NewPlayer() Player {
@@ -35,7 +39,7 @@ func NewPlayer() Player {
 	}
 }
 
-func (p Player) PlayCard(c database.Card) error {
+func (p *Player) PlayCard(c database.Card) error {
 	f, err := p.Open(c.AudioPath)
 	if err != nil {
 		return err
@@ -49,4 +53,50 @@ func (p Player) PlayCard(c database.Card) error {
 	defer streamer.Close()
 
 	return p.Play(streamer, format)
+}
+
+func (p *Player) PlaySong(s Song) error {
+	// 1. Stop any currently playing track
+	p.Stop()
+
+	// 2. Create a new cancellable context for this song
+	p.Mu.Lock()
+	ctx, cancel := context.WithCancel(context.Background())
+	p.Cancel = cancel
+	p.Mu.Unlock()
+
+	// 3. Open and decode audio
+	f, err := p.Open(s.Path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	streamer, format, err := p.Decode(f)
+	if err != nil {
+		return err
+	}
+	defer streamer.Close()
+
+	// 4. Play until finished OR until ctx is cancelled
+	done := make(chan error, 1)
+	go func() {
+		done <- p.Play(streamer, format)
+	}()
+
+	select {
+	case <-ctx.Done():
+		// User picked a new song or hit Stop
+		return nil
+	case err := <-done:
+		// Song finished naturally or errored
+		return err
+	}
+}
+
+func (p *Player) Stop() {
+	if p.Cancel != nil {
+		p.Cancel()
+		p.Cancel = nil
+	}
 }
