@@ -84,7 +84,8 @@ func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 
 func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 	player := audio.NewPlayer()
-	// 1. Scan your files
+
+	// 1. Scan files
 	albums, err := audio.ScanLibrary("./library")
 	if err != nil {
 		log.Fatalf("Error loading music: %v", err)
@@ -100,6 +101,20 @@ func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 	w.Resize(fyne.NewSize(750, 450))
 
 	var currentSongs []audio.Song
+	var activeSong *audio.Song // Keep track of selected song for the button
+
+	// --- Bottom Action Panel ---
+	selectedLabel := widget.NewLabel("Select a song to play or add to a deck...")
+	addBtn := widget.NewButton("Add to Deck", func() {
+		if activeSong == nil {
+			return
+		}
+		// TODO: Call your database insert function using `db` and `*activeSong`
+		fmt.Printf("Adding '%s' to database deck...\n", activeSong.Title)
+	})
+	addBtn.Disable() // Disabled until a song is selected
+
+	bottomBar := container.NewBorder(nil, nil, nil, addBtn, selectedLabel)
 
 	// Right list: Songs in selected album
 	songList := widget.NewList(
@@ -115,16 +130,22 @@ func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 		},
 	)
 
-	// Action when clicking a song: Play
+	// Action when clicking a song: Play + update bottom panel
 	songList.OnSelected = func(id widget.ListItemID) {
 		selectedSong := currentSongs[id]
+		activeSong = &selectedSong
+
+		// Update bottom panel state
+		selectedLabel.SetText(fmt.Sprintf("Selected: %s - %s", selectedSong.Title, selectedSong.Artist))
+		addBtn.Enable()
+
+		// Play song
 		player.Stop()
 		go func() {
 			err := player.PlaySong(selectedSong)
 			if err != nil {
 				log.Printf("Error playing %s: %v", selectedSong.Title, err)
 			}
-
 		}()
 	}
 
@@ -153,7 +174,10 @@ func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 	splitView := container.NewHSplit(albumList, songList)
 	splitView.SetOffset(0.35)
 
-	w.SetContent(splitView)
+	// Pin bottomBar to the bottom, splitView fills remaining space
+	mainLayout := container.NewBorder(nil, bottomBar, nil, nil, splitView)
+
+	w.SetContent(mainLayout)
 	w.ShowAndRun()
 }
 
