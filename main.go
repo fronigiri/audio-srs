@@ -111,6 +111,10 @@ func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 		}
 		// TODO: Call your database insert function using `db` and `*activeSong`
 		fmt.Printf("Adding '%s' to database deck...\n", activeSong.Title)
+		//TODO: Call popup page to get deck for card insertion
+
+		c := database.NewCard(activeSong.Path)
+		database.InsertCard(c, nil)
 
 		//make card and submit
 
