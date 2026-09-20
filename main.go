@@ -111,6 +111,9 @@ func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 		}
 		// TODO: Call your database insert function using `db` and `*activeSong`
 		fmt.Printf("Adding '%s' to database deck...\n", activeSong.Title)
+
+		//make card and submit
+
 	})
 	addBtn.Disable() // Disabled until a song is selected
 
