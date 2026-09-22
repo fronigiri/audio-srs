@@ -236,6 +236,13 @@ func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
 	}
 }
 
-func DeckListPage() int {
-	//Shows the list of decks and sends the
+func DeckPopUpPage(w fyne.Window, db database.DB) int) {
+	//Shows the list of decks and send deck id back
+	DeckList, err := db.GetDeckList()
+	if err != nil {
+		log.Println("Error: unable to get deck list")
+	}
+	
+	return 0
+
 }
