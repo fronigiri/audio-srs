@@ -114,6 +114,7 @@ func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 		//TODO: Call popup page to get deck for card insertion
 
 		c := database.NewCard(activeSong.Path)
+
 		database.InsertCard(c, nil)
 
 		//make card and submit
@@ -233,4 +234,8 @@ func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
 
 		//continue until no cards are due
 	}
+}
+
+func DeckListPage() int {
+	//Shows the list of decks and sends the
 }
