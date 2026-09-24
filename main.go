@@ -109,17 +109,21 @@ func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 		if activeSong == nil {
 			return
 		}
-		// TODO: Call your database insert function using `db` and `*activeSong`
-		fmt.Printf("Adding '%s' to database deck...\n", activeSong.Title)
-		//TODO: Call popup page to get deck for card insertion
 
-		c := database.NewCard(activeSong.Path)
+		// Open the pop-up and provide what to do ONCE the deck is selected
+		DeckPopUpPage(w, db, func(deckID int) {
+			c := database.NewCard(activeSong.Path)
+			err := db.InsertCard(c, deckID)
+			if err != nil {
+				log.Printf("Failed to insert card: %v\n", err)
+				dialog.ShowError(err, w)
+				return
+			}
 
-		database.InsertCard(c, nil)
-
-		//make card and submit
-
+			dialog.ShowInformation("Success", fmt.Sprintf("Added '%s' to deck!", activeSong.Title), w)
+		})
 	})
+
 	addBtn.Disable() // Disabled until a song is selected
 
 	bottomBar := container.NewBorder(nil, nil, nil, addBtn, selectedLabel)
@@ -236,13 +240,51 @@ func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
 	}
 }
 
-func DeckPopUpPage(w fyne.Window, db database.DB) int) {
+func DeckPopUpPage(w fyne.Window, db database.DB, onConfirm func(int)) {
 	//Shows the list of decks and send deck id back
-	DeckList, err := db.GetDeckList()
+	deckList, err := db.GetDeckList()
 	if err != nil {
 		log.Println("Error: unable to get deck list")
 	}
-	
-	return 0
 
+	if len(deckList) == 0 {
+		dialog.ShowInformation("No Decks", "No decks found. Please create a deck first.", w)
+		return
+	}
+
+	// 1. Prepare string slice for the dropdown options
+	deckNames := make([]string, len(deckList))
+	for i, name := range deckList {
+		deckNames[i] = name
+	}
+
+	// 2. Create the dropdown selector
+	selectedName := deckNames[0]
+	selectWidget := widget.NewSelect(deckNames, func(chosen string) {
+		selectedName = chosen
+	})
+	selectWidget.SetSelectedIndex(0)
+
+	// 3. Modal content
+	content := container.NewVBox(
+		widget.NewLabel("Select a deck to add this song to:"),
+		selectWidget,
+	)
+
+	// dialog.ShowCustomConfirm handles the pop-up modal
+	dialog.ShowCustomConfirm("Add to Deck", "Add", "Cancel", content, func(ok bool) {
+		if !ok {
+			return // User canceled
+		}
+
+		// Look up the ID for the chosen name
+		deckID, err := db.GetDeckID(selectedName)
+		if err != nil {
+			log.Println("Error fetching deck ID:", err)
+			return
+		}
+
+		// Trigger the callback with the chosen ID!
+		onConfirm(deckID)
+	}, w)
 }

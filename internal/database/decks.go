@@ -53,3 +53,14 @@ func (db *DB) GetDeckList() ([]string, error) {
 
 	return decks, nil
 }
+
+func (db *DB) GetDeckID(name string) (int, error) {
+	var id int
+
+	err := db.conn.QueryRow(`SELECT id FROM decks WHERE name = ?`, name).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
