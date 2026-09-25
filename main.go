@@ -38,7 +38,7 @@ func main() {
 	w := a.NewWindow("Audio SRS")
 	w.Resize(fyne.NewSize(600, 600))
 	cfg := NewConfig()
-	ShowPageThree(w, cfg, *db)
+	ShowPageTwo(w, cfg, *db)
 	w.ShowAndRun()
 
 }
@@ -68,18 +68,28 @@ func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 	if err != nil {
 		log.Println("Error: unable to list available decks deck list")
 	}
-	for _, deck := range decks {
-		fmt.Println(deck)
 
-	}
+	deckList := widget.NewList(
+		func() int {
+			return len(decks)
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("Decks")
+		},
+		func(id widget.ListItemID, obj fyne.CanvasObject) {
+			obj.(*widget.Label).SetText(decks[id])
+		},
+	)
 
-	button := widget.NewButton("Create New Deck", func() {
+	createButton := widget.NewButton("Create New Deck", func() {
 		d := database.Deck{}
 		db.CreateDeck(d)
 	},
 	)
-	content := container.New(layout.NewCenterLayout(), button)
-	w.SetContent(content)
+
+	bottomBar := container.NewBorder(nil, nil, nil, createButton)
+	mainLayout := container.NewBorder(deckList, bottomBar, nil, nil, nil)
+	w.SetContent(mainLayout)
 }
 
 func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
