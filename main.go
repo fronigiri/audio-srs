@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -63,33 +64,46 @@ func ShowHomePage(w fyne.Window, cfg *Config) {
 }
 
 func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
+	var deckNames []string
 
-	decks, err := db.GetDeckList()
-	if err != nil {
-		log.Println("Error: unable to list available decks deck list")
-	}
-
-	deckList := widget.NewList(
+	deckListWidget := widget.NewList(
 		func() int {
-			return len(decks)
+			return len(deckNames)
 		},
 		func() fyne.CanvasObject {
-			return widget.NewLabel("Decks")
+			return widget.NewLabel("Deck Name Template")
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
-			obj.(*widget.Label).SetText(decks[id])
+			// id matches the index in deckNames
+			obj.(*widget.Label).SetText(deckNames[id])
 		},
 	)
 
-	createButton := widget.NewButton("Create New Deck", func() {
-		d := database.Deck{}
-		db.CreateDeck(d)
-	},
-	)
+	// Helper function to query DB and update UI
+	refreshDecks := func() {
+		var err error
+		deckNames, err = db.GetDeckList()
+		if err != nil {
+			dialog.ShowError(err, w)
+			return
+		}
+		deckListWidget.Refresh()
+	}
 
-	bottomBar := container.NewBorder(nil, nil, nil, createButton)
-	mainLayout := container.NewBorder(deckList, bottomBar, nil, nil, nil)
-	w.SetContent(mainLayout)
+	// Button to trigger the New Deck form dialog
+	newDeckBtn := widget.NewButton("Create New Deck", func() {
+		ShowCreateDeckDialog(w, db, func() {
+			// When a deck is created in DB, refresh the string slice!
+			refreshDecks()
+		})
+	})
+
+	// Initial fetch from DB
+	refreshDecks()
+
+	// Assemble layout: button at top, list fills the rest
+	layout := container.NewBorder(newDeckBtn, nil, nil, nil, deckListWidget)
+	w.SetContent(layout)
 }
 
 func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
@@ -297,4 +311,46 @@ func DeckPopUpPage(w fyne.Window, db database.DB, onConfirm func(int)) {
 		// Trigger the callback with the chosen ID!
 		onConfirm(deckID)
 	}, w)
+}
+
+func ShowCreateDeckDialog(w fyne.Window, db database.DB, onDeckCreated func()) {
+	// 1. Create the entry input field
+	nameEntry := widget.NewEntry()
+	nameEntry.SetPlaceHolder("e.g. Jazz Standards, Ear Training...")
+
+	// 2. Define the form item(s)
+	items := []*widget.FormItem{
+		widget.NewFormItem("Deck Name", nameEntry),
+	}
+
+	// 3. Show the form dialog
+	dialog.ShowForm(
+		"Create New Deck",
+		"Create",
+		"Cancel",
+		items,
+		func(confirmed bool) {
+			if !confirmed {
+				return
+			}
+
+			deckName := strings.TrimSpace(nameEntry.Text)
+			if deckName == "" {
+				return
+			}
+
+			// Insert into the database
+			err := db.CreateDeck(deckName)
+			if err != nil {
+				dialog.ShowError(err, w)
+				return
+			}
+
+			// Notify caller to reload/refresh the list of decks
+			if onDeckCreated != nil {
+				onDeckCreated()
+			}
+		},
+		w,
+	)
 }

@@ -12,13 +12,13 @@ type Deck struct {
 	CreatedAt time.Time
 }
 
-func (db *DB) CreateDeck(d Deck) error {
+func (db *DB) CreateDeck(name string) error {
 	_, err := db.conn.Exec(`
-	INSERT INTO decks (id, name, created_at) VALUES (?,?,?)
+		INSERT INTO decks (name, created_at) 
+		VALUES (?, ?)
 	`,
-		d.ID,
-		d.Name,
-		d.CreatedAt.Format(time.RFC3339),
+		name,
+		time.Now().UTC(),
 	)
 	return err
 }
