@@ -29,9 +29,9 @@ func chooseFolder(cfg *Config, w fyne.Window) {
 }
 
 func main() {
-	db, err := database.StartDB()
+	db, err := database.StartDB("./audio-srs", ".sql/schema/001_schema")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	defer db.Close()
 
