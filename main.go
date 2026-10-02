@@ -29,7 +29,7 @@ func chooseFolder(cfg *Config, w fyne.Window) {
 }
 
 func main() {
-	db, err := database.StartDB("./audio-srs", ".sql/schema/001_schema")
+	db, err := database.StartDB("./audio-srs.db", "./internal/sql/schema/001_schema.sql")
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
