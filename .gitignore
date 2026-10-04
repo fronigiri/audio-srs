@@ -5,6 +5,9 @@ my-project
 # Environment files
 .env
 
-#Test audio files
+# Test audio files
 media/
 library/
+
+# Database Files
+*.db

@@ -41,9 +41,6 @@ func main() {
 	cfg := NewConfig()
 	ShowPageTwo(w, cfg, *db)
 	w.ShowAndRun()
-
-	//TODO: Add a way to navigate through the various pages
-
 }
 
 func ShowHomePage(w fyne.Window, cfg *Config) {
