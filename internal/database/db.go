@@ -22,13 +22,11 @@ func StartDB(dbPath, schemaPath string) (*DB, error) {
 		return nil, fmt.Errorf("error connecting to database: %w", err)
 	}
 
-	// 1. Enable foreign key support in SQLite
 	if _, err := conn.Exec("PRAGMA foreign_keys = ON;"); err != nil {
 		conn.Close()
 		return nil, fmt.Errorf("error enabling foreign keys: %w", err)
 	}
 
-	// 2. Read and apply the schema file
 	schemaBytes, err := os.ReadFile(schemaPath)
 	if err != nil {
 		conn.Close()
