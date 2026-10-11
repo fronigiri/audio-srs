@@ -70,3 +70,7 @@ func (db *DB) GetNextDueCard(deckID int) (Card, error) {
 	}
 	return c, nil
 }
+
+func (db *DB) UpdateCard(c Card) error {
+	return nil
+}

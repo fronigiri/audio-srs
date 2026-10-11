@@ -217,50 +217,86 @@ func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 }
 
 func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
-	//Run the audio SRS
-
-	//Make new player (only need to do this once)
 	p := audio.NewPlayer()
 
-	//get cards from deck
-	for {
-		card, err := db.GetNextDueCard(deckID)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if card.DueDate.Day() != time.Now().Day() {
-			break
-		}
+	var currentCard database.Card
 
-		//stop card audio before playing the next one
+	// 1. Labels for card information
+	statusLabel := widget.NewLabel("")
+	replayBtn := widget.NewButton("Replay Audio", func() {
+		p.Stop()
+		go p.PlayCard(currentCard)
+	})
+
+	// 2. Define loadNextCard (replaces the 'for' loop)
+	var loadNextCard func()
+
+	// 3. Helper to handle grading when any button is tapped
+	handleRating := func(rating int) {
+		// Stop any audio currently playing
 		p.Stop()
 
-		//play card and get rating
-		p.PlayCard(card)
-		rating := 3
-		button := widget.NewButton(
-			"Again",
-			func() { rating = 1 },
-		)
-		button2 := widget.NewButton(
-			"Hard",
-			func() { rating = 2 },
-		)
-		button3 := widget.NewButton(
-			"Good",
-			func() { rating = 3 },
-		)
-		button4 := widget.NewButton(
-			"Easy",
-			func() { rating = 4 },
-		)
-		container.New(layout.NewGridLayoutWithRows(4), button, button2, button3, button4)
+		// Update card in memory with SRS algorithm
+		srs.Review(&currentCard, rating)
 
-		//schedule said card
-		srs.Review(&card, rating)
+		// Save the updated card to the database
+		err := db.UpdateCard(currentCard)
+		if err != nil {
+			log.Printf("Error updating card: %v", err)
+		}
 
-		//continue until no cards are due
+		// Advance to next card!
+		loadNextCard()
 	}
+
+	// 4. Create the 4 bottom rating buttons
+	btnAgain := widget.NewButton("Again", func() { handleRating(1) })
+	btnHard := widget.NewButton("Hard", func() { handleRating(2) })
+	btnGood := widget.NewButton("Good", func() { handleRating(3) })
+	btnEasy := widget.NewButton("Easy", func() { handleRating(4) })
+
+	bottomBar := container.New(layout.NewGridLayoutWithColumns(4),
+		btnAgain,
+		btnHard,
+		btnGood,
+		btnEasy,
+	)
+
+	// 5. Implementation of loadNextCard
+	loadNextCard = func() {
+		card, err := db.GetNextDueCard(deckID)
+		if err != nil {
+			log.Printf("Error getting due card: %v", err)
+			w.SetContent(widget.NewLabel("All caught up! No cards due for review."))
+			return
+		}
+
+		// Check if the card is actually due today or earlier
+		if card.DueDate.After(time.Now()) {
+			w.SetContent(container.NewCenter(widget.NewLabel("All caught up! No cards due for review.")))
+			return
+		}
+
+		currentCard = card
+		statusLabel.SetText(fmt.Sprintf("Studying Card ID: %d", card.ID))
+
+		// Play audio in a goroutine so UI does not freeze
+		p.Stop()
+		go p.PlayCard(currentCard)
+	}
+
+	// 6. Layout Composition
+	centerContent := container.NewVBox(
+		statusLabel,
+		replayBtn,
+	)
+
+	// Pin the 4 buttons to the bottom, card info in center
+	mainLayout := container.NewBorder(nil, bottomBar, nil, nil, container.NewCenter(centerContent))
+	w.SetContent(mainLayout)
+
+	// Kick off the first card
+	loadNextCard()
 }
 
 func DeckPopUpPage(w fyne.Window, db database.DB, onConfirm func(int)) {
