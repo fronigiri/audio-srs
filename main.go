@@ -39,7 +39,7 @@ func main() {
 	w := a.NewWindow("Audio SRS")
 	w.Resize(fyne.NewSize(600, 600))
 	cfg := NewConfig()
-	ShowPageThree(w, cfg, *db)
+	ShowPageTwo(w, cfg, *db)
 	w.ShowAndRun()
 }
 
@@ -99,9 +99,12 @@ func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 
 	// Initial fetch from DB
 	refreshDecks()
+	startSRSButton := widget.NewButton("Run List", func()){
 
+	}
 	// Assemble layout: button at top, list fills the rest
-	layout := container.NewBorder(newDeckBtn, nil, nil, nil, deckListWidget)
+	layout := container.NewBorder(newDeckBtn, startSRSButton, nil, nil, deckListWidget)
+
 	w.SetContent(layout)
 }
 
