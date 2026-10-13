@@ -2,13 +2,18 @@ package audio
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/gopxl/beep"
+	"github.com/gopxl/beep/flac"
 	"github.com/gopxl/beep/mp3"
 	"github.com/gopxl/beep/speaker"
+	"github.com/gopxl/beep/wav"
 
 	"github.com/fronigiri/audio-srs/internal/database"
 )
@@ -39,59 +44,57 @@ func NewPlayer() Player {
 	}
 }
 
-func (p *Player) PlayCard(c database.Card) error {
-	f, err := p.Open(c.AudioPath)
+func (p *Player) DecodeFile(filePath string) (beep.StreamSeekCloser, beep.Format, *os.File, error) {
+	f, err := os.Open(filePath)
 	if err != nil {
-		return err
+		return nil, beep.Format{}, nil, err
 	}
-	defer f.Close()
 
-	streamer, format, err := p.Decode(f)
+	ext := strings.ToLower(filepath.Ext(filePath))
+
+	var streamer beep.StreamSeekCloser
+	var format beep.Format
+
+	switch ext {
+	case ".mp3":
+		streamer, format, err = mp3.Decode(f)
+	case ".flac":
+		streamer, format, err = flac.Decode(f)
+	case ".wav":
+		streamer, format, err = wav.Decode(f)
+	default:
+		f.Close()
+		return nil, beep.Format{}, nil, fmt.Errorf("unsupported audio format: %s", ext)
+	}
+
+	if err != nil {
+		f.Close()
+		return nil, beep.Format{}, nil, fmt.Errorf("failed to decode %s: %w", ext, err)
+	}
+
+	return streamer, format, f, nil
+}
+
+func (p *Player) PlayCard(c database.Card) error {
+	streamer, format, file, err := p.DecodeFile(c.AudioPath)
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 	defer streamer.Close()
 
 	return p.Play(streamer, format)
 }
 
-func (p *Player) PlaySong(s Song) error {
-	// 1. Stop any currently playing track
-	p.Stop()
-
-	// 2. Create a new cancellable context for this song
-	p.Mu.Lock()
-	ctx, cancel := context.WithCancel(context.Background())
-	p.Cancel = cancel
-	p.Mu.Unlock()
-
-	// 3. Open and decode audio
-	f, err := p.Open(s.Path)
+func (p *Player) PlaySong(filePath string) error {
+	streamer, format, file, err := p.DecodeFile(filePath)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-
-	streamer, format, err := p.Decode(f)
-	if err != nil {
-		return err
-	}
+	defer file.Close()
 	defer streamer.Close()
 
-	// 4. Play until finished OR until ctx is cancelled
-	done := make(chan error, 1)
-	go func() {
-		done <- p.Play(streamer, format)
-	}()
-
-	select {
-	case <-ctx.Done():
-		// User picked a new song or hit Stop
-		return nil
-	case err := <-done:
-		// Song finished naturally or errored
-		return err
-	}
+	return p.Play(streamer, format)
 }
 
 func (p *Player) Stop() {

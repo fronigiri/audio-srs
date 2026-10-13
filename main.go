@@ -39,7 +39,7 @@ func main() {
 	w := a.NewWindow("Audio SRS")
 	w.Resize(fyne.NewSize(600, 600))
 	cfg := NewConfig()
-	ShowPageTwo(w, cfg, *db)
+	ShowPageThree(w, cfg, *db)
 	w.ShowAndRun()
 }
 
@@ -61,6 +61,8 @@ func ShowHomePage(w fyne.Window, cfg *Config) {
 
 	w.SetContent(content)
 }
+
+// Deck list page
 
 func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 	var deckNames []string
@@ -136,6 +138,7 @@ func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 	w.SetContent(layout)
 }
 
+// Song Browser Page
 func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 	player := audio.NewPlayer()
 
@@ -208,7 +211,7 @@ func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 		// Play song
 		player.Stop()
 		go func() {
-			err := player.PlaySong(selectedSong)
+			err := player.PlaySong(selectedSong.Path)
 			if err != nil {
 				log.Printf("Error playing %s: %v", selectedSong.Title, err)
 			}
