@@ -64,7 +64,27 @@ func ShowHomePage(w fyne.Window, cfg *Config) {
 
 func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 	var deckNames []string
+	selectedDeckName := "" // Tracks which deck the user clicked
 
+	// 1. Study button starts disabled at the bottom
+	startSRSButton := widget.NewButton("Select a Deck to Study", func() {
+		if selectedDeckName == "" {
+			return
+		}
+
+		// Look up the deck ID from the database
+		deckID, err := db.GetDeckID(selectedDeckName)
+		if err != nil {
+			dialog.ShowError(err, w)
+			return
+		}
+
+		// Navigate to Page Four (the SRS review page)
+		ShowPageFour(w, cfg, db, deckID)
+	})
+	startSRSButton.Disable() // Disabled until a deck is clicked
+
+	// 2. Deck List Widget
 	deckListWidget := widget.NewList(
 		func() int {
 			return len(deckNames)
@@ -73,12 +93,18 @@ func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 			return widget.NewLabel("Deck Name Template")
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
-			// id matches the index in deckNames
 			obj.(*widget.Label).SetText(deckNames[id])
 		},
 	)
 
-	// Helper function to query DB and update UI
+	// When a deck is clicked: activate and update the study button!
+	deckListWidget.OnSelected = func(id widget.ListItemID) {
+		selectedDeckName = deckNames[id]
+		startSRSButton.SetText(fmt.Sprintf("Study: %s", selectedDeckName))
+		startSRSButton.Enable()
+	}
+
+	// 3. Helper function to query DB and update UI
 	refreshDecks := func() {
 		var err error
 		deckNames, err = db.GetDeckList()
@@ -86,25 +112,27 @@ func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 			dialog.ShowError(err, w)
 			return
 		}
+		// Reset selection on refresh
+		selectedDeckName = ""
+		startSRSButton.SetText("Select a Deck to Study")
+		startSRSButton.Disable()
+
+		deckListWidget.UnselectAll()
 		deckListWidget.Refresh()
 	}
 
-	// Button to trigger the New Deck form dialog
+	// 4. Button to trigger the New Deck form dialog
 	newDeckBtn := widget.NewButton("Create New Deck", func() {
 		ShowCreateDeckDialog(w, db, func() {
-			// When a deck is created in DB, refresh the string slice!
 			refreshDecks()
 		})
 	})
 
-	// Initial fetch from DB
+	// Initial fetch
 	refreshDecks()
-	startSRSButton := widget.NewButton("Run List", func()){
 
-	}
-	// Assemble layout: button at top, list fills the rest
+	// 5. Layout: Top has Create button, Bottom has Study button, Center has Deck list
 	layout := container.NewBorder(newDeckBtn, startSRSButton, nil, nil, deckListWidget)
-
 	w.SetContent(layout)
 }
 
