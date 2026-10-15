@@ -98,8 +98,9 @@ func (p *Player) PlaySong(filePath string) error {
 }
 
 func (p *Player) Stop() {
-	if p.Cancel != nil {
-		p.Cancel()
-		p.Cancel = nil
-	}
+	p.Mu.Lock()
+	defer p.Mu.Unlock()
+
+	// speaker.Clear removes all audio streams from the speaker
+	speaker.Clear()
 }

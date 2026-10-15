@@ -251,6 +251,8 @@ func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 }
 
 func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
+	//SRS Page
+
 	p := audio.NewPlayer()
 
 	var currentCard database.Card
