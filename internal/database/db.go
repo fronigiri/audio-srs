@@ -13,7 +13,10 @@ type DB struct {
 }
 
 func StartDB(dbPath, schemaPath string) (*DB, error) {
-	conn, err := sql.Open("sqlite3", dbPath)
+
+	dsn := fmt.Sprintf("%s?_parseTime=true", dbPath)
+
+	conn, err := sql.Open("sqlite3", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("error opening database: %w", err)
 	}
