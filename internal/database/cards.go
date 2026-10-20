@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -35,8 +36,8 @@ func (db *DB) InsertCard(c Card, deckID int) error {
 		c.AudioPath,
 		c.Interval,
 		c.EF,
-		c.DueDate.Format(time.RFC3339),
-		c.CreatedAt.Format(time.RFC3339),
+		c.DueDate.UTC().Format(time.RFC3339),
+		c.CreatedAt.UTC().Format(time.RFC3339),
 		deckID,
 	)
 	return err
@@ -49,6 +50,9 @@ func (db *DB) RemoveCard(id int) error {
 
 func (db *DB) GetNextDueCard(deckID int) (Card, error) {
 	var c Card
+	var dueDateStr string
+	var createdAtStr string
+
 	err := db.conn.QueryRow(`
         SELECT id, audio_path, interval, ease_factor, due_date, created_at 
         FROM cards 
@@ -56,18 +60,28 @@ func (db *DB) GetNextDueCard(deckID int) (Card, error) {
         ORDER BY due_date ASC 
         LIMIT 1`,
 		deckID,
-		time.Now().Format(time.RFC3339),
+		time.Now().UTC().Format(time.RFC3339),
 	).Scan(
 		&c.ID,
 		&c.AudioPath,
 		&c.Interval,
 		&c.EF,
-		&c.DueDate,
-		&c.CreatedAt,
+		&dueDateStr,
+		&createdAtStr,
 	)
 	if err != nil {
 		return Card{}, err
 	}
+	c.DueDate, err = time.Parse(time.RFC3339, dueDateStr)
+	if err != nil {
+		return Card{}, fmt.Errorf("failed to parse due_date: %w", err)
+	}
+
+	c.CreatedAt, err = time.Parse(time.RFC3339, createdAtStr)
+	if err != nil {
+		return Card{}, fmt.Errorf("failed to parse created_at: %w", err)
+	}
+
 	return c, nil
 }
 

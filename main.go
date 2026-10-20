@@ -43,18 +43,18 @@ func main() {
 	w.ShowAndRun()
 }
 
-func ShowHomePage(w fyne.Window, cfg *Config) {
+func ShowHomePage(w fyne.Window, cfg *Config, db database.DB) {
 	button := widget.NewButtonWithIcon("Choose Library Path...", theme.FileIcon(), func() {
 		chooseFolder(cfg, w)
 	})
 
 	button2 := widget.NewButton(
 		"Decks",
-		func() { println("Deck Button") },
+		func() { ShowPageTwo(w, cfg, db) },
 	)
 	button3 := widget.NewButton(
 		"Browse Library",
-		func() { println("Library Button") },
+		func() { ShowPageThree(w, cfg, db) },
 	)
 	sidebar := container.New(layout.NewGridLayoutWithRows(3), button, button2, button3)
 	content := container.New(layout.NewVBoxLayout(), sidebar)
