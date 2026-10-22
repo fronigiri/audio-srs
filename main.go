@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -251,87 +250,94 @@ func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 }
 
 func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
-	//SRS Page
-
 	p := audio.NewPlayer()
 
 	var currentCard database.Card
 
-	// 1. Labels for card information
+	// 1. UI Labels
 	statusLabel := widget.NewLabel("")
+	answerLabel := widget.NewLabel("") // Displays answer/metadata on reveal
+	answerLabel.Hide()                 // Hidden initially
+
 	replayBtn := widget.NewButton("Replay Audio", func() {
 		p.Stop()
 		go p.PlayCard(currentCard)
 	})
 
-	// 2. Define loadNextCard (replaces the 'for' loop)
 	var loadNextCard func()
 
-	// 3. Helper to handle grading when any button is tapped
+	// 2. Rating handler (Back Side)
 	handleRating := func(rating int) {
-		// Stop any audio currently playing
 		p.Stop()
 
-		// Update card in memory with SRS algorithm
+		// Update card in SRS algorithm & DB
 		srs.Review(&currentCard, rating)
-
-		// Save the updated card to the database
-		err := db.UpdateCard(currentCard)
-		if err != nil {
+		if err := db.UpdateCard(currentCard); err != nil {
 			log.Printf("Error updating card: %v", err)
 		}
 
-		// Advance to next card!
+		// Advance to next card
 		loadNextCard()
 	}
 
-	// 4. Create the 4 bottom rating buttons
+	// 3. Create the 4 Rating Buttons (Back side controls)
 	btnAgain := widget.NewButton("Again", func() { handleRating(1) })
 	btnHard := widget.NewButton("Hard", func() { handleRating(2) })
 	btnGood := widget.NewButton("Good", func() { handleRating(3) })
 	btnEasy := widget.NewButton("Easy", func() { handleRating(4) })
 
-	bottomBar := container.New(layout.NewGridLayoutWithColumns(4),
-		btnAgain,
-		btnHard,
-		btnGood,
-		btnEasy,
+	ratingBar := container.New(layout.NewGridLayoutWithColumns(4),
+		btnAgain, btnHard, btnGood, btnEasy,
 	)
+	ratingBar.Hide() // Start hidden until user flips the card!
 
-	// 5. Implementation of loadNextCard
+	// 4. "Show Answer" Button (Front side control)
+	var showAnswerBtn *widget.Button
+	showAnswerBtn = widget.NewButton("Show Answer", func() {
+		// Flip to back side:
+		answerLabel.Show()   // Reveal card details
+		showAnswerBtn.Hide() // Hide the show answer button
+		ratingBar.Show()     // Reveal the 4 rating buttons
+	})
+
+	// Bottom action bar holds either the "Show Answer" button OR the 4 rating buttons
+	bottomControls := container.NewStack(showAnswerBtn, ratingBar)
+
+	// 5. Load Next Card (Front Side Setup)
 	loadNextCard = func() {
 		card, err := db.GetNextDueCard(deckID)
 		if err != nil {
-			log.Printf("Error getting due card: %v", err)
-			w.SetContent(widget.NewLabel("All caught up! No cards due for review."))
-			return
-		}
-
-		// Check if the card is actually due today or earlier
-		if card.DueDate.After(time.Now()) {
+			log.Printf("No due cards: %v", err)
 			w.SetContent(container.NewCenter(widget.NewLabel("All caught up! No cards due for review.")))
 			return
 		}
 
 		currentCard = card
-		statusLabel.SetText(fmt.Sprintf("Studying Card ID: %d", card.ID))
 
-		// Play audio in a goroutine so UI does not freeze
+		// Reset UI to FRONT side
+		statusLabel.SetText(fmt.Sprintf("Card ID: %d", card.ID))
+		answerLabel.SetText(fmt.Sprintf("Song: %s", card.AudioPath)) // or card notes/title
+		answerLabel.Hide()
+
+		showAnswerBtn.Show()
+		ratingBar.Hide()
+
+		// Play front-side audio in background
 		p.Stop()
 		go p.PlayCard(currentCard)
 	}
 
-	// 6. Layout Composition
+	// 6. Layout
 	centerContent := container.NewVBox(
 		statusLabel,
 		replayBtn,
+		answerLabel,
 	)
 
-	// Pin the 4 buttons to the bottom, card info in center
-	mainLayout := container.NewBorder(nil, bottomBar, nil, nil, container.NewCenter(centerContent))
-	w.SetContent(mainLayout)
+	layout := container.NewBorder(nil, bottomControls, nil, nil, container.NewCenter(centerContent))
+	w.SetContent(layout)
 
-	// Kick off the first card
+	// Start first card
 	loadNextCard()
 }
 
