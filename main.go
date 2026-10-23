@@ -294,7 +294,7 @@ func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
 	// 4. "Show Answer" Button (Front side control)
 	var showAnswerBtn *widget.Button
 	showAnswerBtn = widget.NewButton("Show Answer", func() {
-		// Flip to back side:
+
 		answerLabel.Show()   // Reveal card details
 		showAnswerBtn.Hide() // Hide the show answer button
 		ratingBar.Show()     // Reveal the 4 rating buttons
@@ -316,7 +316,7 @@ func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
 
 		// Reset UI to FRONT side
 		statusLabel.SetText(fmt.Sprintf("Card ID: %d", card.ID))
-		answerLabel.SetText(fmt.Sprintf("Song: %s", card.AudioPath)) // or card notes/title
+		answerLabel.SetText(fmt.Sprintf("%s", card.AudioPath)) // or card notes/title
 		answerLabel.Hide()
 
 		showAnswerBtn.Show()
