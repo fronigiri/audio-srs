@@ -58,3 +58,44 @@ func ScanLibrary(libraryPath string) (map[string][]Song, error) {
 
 	return albums, nil
 }
+
+func ScanMetadata(audioPath string) (Song, error) {
+	currentSong := Song{}
+
+	err := filepath.Walk(audioPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		file, err := os.Open(path)
+		if err != nil {
+			return nil
+		}
+
+		defer file.Close()
+
+		m, err := tag.ReadFrom(file)
+		if err != nil {
+			return nil
+		}
+
+		albumName := m.Album()
+		if albumName == "" {
+			albumName = "Unknown Album"
+		}
+
+		song := Song{
+			Title:  m.Title(),
+			Artist: m.Artist(),
+			Album:  albumName,
+			Path:   path,
+		}
+		currentSong = song
+		return nil
+	})
+
+	if err != nil {
+		return currentSong, err
+	}
+
+	return currentSong, nil
+}

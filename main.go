@@ -315,8 +315,13 @@ func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
 		currentCard = card
 
 		// Reset UI to FRONT side
+		song, err := audio.ScanMetadata(card.AudioPath)
+		if err != nil {
+			log.Printf("Error: Unable to scan metadata: %v", err)
+		}
+
 		statusLabel.SetText(fmt.Sprintf("Card ID: %d", card.ID))
-		answerLabel.SetText(fmt.Sprintf("%s", card.AudioPath)) // or card notes/title
+		answerLabel.SetText(fmt.Sprintf("%s - %s", song.Title, song.Album)) // or card notes/title
 		answerLabel.Hide()
 
 		showAnswerBtn.Show()
