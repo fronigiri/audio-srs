@@ -86,5 +86,18 @@ func (db *DB) GetNextDueCard(deckID int) (Card, error) {
 }
 
 func (db *DB) UpdateCard(c Card) error {
+	_, err := db.conn.Exec(`
+		UPDATE cards (repetition, interval, ease_factor) WHERE id = ?
+		VALUES (?, ?, ?)
+		`, c.DeckID,
+		c.Repetition,
+		c.Interval,
+		c.EF,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to update: %w", err)
+	}
+
 	return nil
 }
