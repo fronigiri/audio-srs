@@ -39,6 +39,7 @@ func main() {
 	w.Resize(fyne.NewSize(600, 600))
 	cfg := NewConfig()
 	ShowPageTwo(w, cfg, *db)
+	// TODO: Added page navigation and a main page
 	w.ShowAndRun()
 }
 
