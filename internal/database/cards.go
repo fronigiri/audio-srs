@@ -87,16 +87,22 @@ func (db *DB) GetNextDueCard(deckID int) (Card, error) {
 
 func (db *DB) UpdateCard(c Card) error {
 	_, err := db.conn.Exec(`
-		UPDATE cards (repetition, interval, ease_factor) WHERE id = ?
-		VALUES (?, ?, ?)
-		`, c.DeckID,
+		UPDATE cards 
+		SET repetition = ?, 
+		    interval = ?, 
+		    ease_factor = ?, 
+		    due_date = ?
+		WHERE id = ?
+	`,
 		c.Repetition,
 		c.Interval,
 		c.EF,
+		c.DueDate.UTC().Format(time.RFC3339),
+		c.ID,
 	)
 
 	if err != nil {
-		return fmt.Errorf("failed to update: %w", err)
+		return fmt.Errorf("failed to update card %d: %w", c.ID, err)
 	}
 
 	return nil
