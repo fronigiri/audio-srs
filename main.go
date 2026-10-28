@@ -10,7 +10,6 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/fronigiri/audio-srs/internal/audio"
@@ -27,6 +26,12 @@ func chooseFolder(cfg *Config, w fyne.Window) {
 	}, w)
 }
 
+type AppContext struct {
+	Window fyne.Window
+	DB     database.DB
+	Config *Config
+}
+
 func main() {
 	db, err := database.StartDB("./audio-srs.db", "./internal/sql/schema/001_schema.sql")
 	if err != nil {
@@ -36,35 +41,61 @@ func main() {
 
 	a := app.NewWithID("com.fronigiri.audio-srs")
 	w := a.NewWindow("Audio SRS")
-	w.Resize(fyne.NewSize(600, 600))
+	w.Resize(fyne.NewSize(900, 600))
 	cfg := NewConfig()
 	ShowPageTwo(w, cfg, *db)
 	// TODO: Added page navigation and a main page
 	w.ShowAndRun()
 }
 
-func ShowHomePage(w fyne.Window, cfg *Config, db database.DB) {
-	button := widget.NewButtonWithIcon("Choose Library Path...", theme.FileIcon(), func() {
-		chooseFolder(cfg, w)
+func SetupMainWindow(appCtx *AppContext) {
+	w := appCtx.Window
+	w.Resize(fyne.NewSize(900, 600))
+
+	// 1. Dynamic content area (starts with Page Two / Decks)
+	contentArea := container.NewStack()
+
+	// Helper function to swap the active page
+	setPage := func(pageContent fyne.CanvasObject) {
+		contentArea.Objects = []fyne.CanvasObject{pageContent}
+		contentArea.Refresh()
+	}
+
+	// 2. Navigation Sidebar Buttons
+	btnDecks := widget.NewButton("Decks", func() {
+		// Load Deck Browser view
+		setPage(makePageTwo(appCtx, setPage))
 	})
 
-	button2 := widget.NewButton(
-		"Decks",
-		func() { ShowPageTwo(w, cfg, db) },
-	)
-	button3 := widget.NewButton(
-		"Browse Library",
-		func() { ShowPageThree(w, cfg, db) },
-	)
-	sidebar := container.New(layout.NewGridLayoutWithRows(3), button, button2, button3)
-	content := container.New(layout.NewVBoxLayout(), sidebar)
+	btnBrowser := widget.NewButton("Music Browser", func() {
+		// Load Song Browser view
+		setPage(makePageThree(appCtx))
+	})
 
-	w.SetContent(content)
+	// Sidebar container (VBox stacks items vertically)
+	sidebar := container.NewVBox(
+		widget.NewLabelWithStyle("Audio SRS", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewSeparator(),
+		btnDecks,
+		btnBrowser,
+	)
+
+	// Wrap sidebar in a border to give it consistent padding or width if desired
+	sidebarContainer := container.NewBorder(nil, nil, nil, nil, sidebar)
+
+	// 3. Main Split View: Left = Sidebar, Right = Dynamic Content
+	mainLayout := container.NewHSplit(sidebarContainer, contentArea)
+	mainLayout.SetOffset(0.2) // Sidebar takes ~20% of width
+
+	w.SetContent(mainLayout)
+
+	// Set initial page (Page Two / Decks)
+	setPage(makePageTwo(appCtx, setPage))
 }
 
 // Deck list page
 
-func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
+func makePageTwo(ctx *AppContext, navigate func(fyne.CanvasObject)) fyne.CanvasObject {
 	var deckNames []string
 	selectedDeckName := "" // Tracks which deck the user clicked
 
@@ -75,14 +106,13 @@ func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 		}
 
 		// Look up the deck ID from the database
-		deckID, err := db.GetDeckID(selectedDeckName)
+		deckID, err := ctx.DB.GetDeckID(selectedDeckName)
 		if err != nil {
-			dialog.ShowError(err, w)
-			return
+			dialog.ShowError(err, ctx.Window)
 		}
 
 		// Navigate to Page Four (the SRS review page)
-		ShowPageFour(w, cfg, db, deckID)
+		navigate(makePageFour(ctx, deckID, navigate))
 	})
 	startSRSButton.Disable() // Disabled until a deck is clicked
 
@@ -109,9 +139,9 @@ func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 	// 3. Helper function to query DB and update UI
 	refreshDecks := func() {
 		var err error
-		deckNames, err = db.GetDeckList()
+		deckNames, err = ctx.DB.GetDeckList()
 		if err != nil {
-			dialog.ShowError(err, w)
+			dialog.ShowError(err, ctx.Window)
 			return
 		}
 		// Reset selection on refresh
@@ -125,7 +155,7 @@ func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 
 	// 4. Button to trigger the New Deck form dialog
 	newDeckBtn := widget.NewButton("Create New Deck", func() {
-		ShowCreateDeckDialog(w, db, func() {
+		ShowCreateDeckDialog(ctx.Window, ctx.DB, func() {
 			refreshDecks()
 		})
 	})
@@ -133,13 +163,11 @@ func ShowPageTwo(w fyne.Window, cfg *Config, db database.DB) {
 	// Initial fetch
 	refreshDecks()
 
-	// 5. Layout: Top has Create button, Bottom has Study button, Center has Deck list
-	layout := container.NewBorder(newDeckBtn, startSRSButton, nil, nil, deckListWidget)
-	w.SetContent(layout)
+	return container.NewBorder(newDeckBtn, startSRSButton, nil, nil, deckListWidget)
 }
 
 // Song Browser Page
-func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
+func makePageThree(ctx *AppContext) fyne.CanvasObject {
 	player := audio.NewPlayer()
 
 	// 1. Scan files
@@ -155,7 +183,7 @@ func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 	}
 
 	// 3. Fyne Window setup
-	w.Resize(fyne.NewSize(750, 450))
+	ctx.Window.Resize(fyne.NewSize(750, 450))
 
 	var currentSongs []audio.Song
 	var activeSong *audio.Song // Keep track of selected song for the button
@@ -168,16 +196,16 @@ func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 		}
 
 		// Open the pop-up and provide what to do ONCE the deck is selected
-		DeckPopUpPage(w, db, func(deckID int) {
+		DeckPopUpPage(ctx.Window, ctx.DB, func(deckID int) {
 			c := database.NewCard(activeSong.Path)
-			err := db.InsertCard(c, deckID)
+			err := ctx.DB.InsertCard(c, deckID)
 			if err != nil {
 				log.Printf("Failed to insert card: %v\n", err)
-				dialog.ShowError(err, w)
+				dialog.ShowError(err, ctx.Window)
 				return
 			}
 
-			dialog.ShowInformation("Success", fmt.Sprintf("Added '%s' to deck!", activeSong.Title), w)
+			dialog.ShowInformation("Success", fmt.Sprintf("Added '%s' to deck!", activeSong.Title), ctx.Window)
 		})
 	})
 
@@ -245,12 +273,10 @@ func ShowPageThree(w fyne.Window, cfg *Config, db database.DB) {
 
 	// Pin bottomBar to the bottom, splitView fills remaining space
 	mainLayout := container.NewBorder(nil, bottomBar, nil, nil, splitView)
-
-	w.SetContent(mainLayout)
-	w.ShowAndRun()
+	return mainLayout
 }
 
-func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
+func makePageFour(ctx *AppContext, deckID int, navigate func(fyne.CanvasObject)) fyne.CanvasObject {
 	p := audio.NewPlayer()
 
 	var currentCard database.Card
@@ -273,7 +299,7 @@ func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
 
 		// Update card in SRS algorithm & DB
 		srs.Review(&currentCard, rating)
-		if err := db.UpdateCard(currentCard); err != nil {
+		if err := ctx.DB.UpdateCard(currentCard); err != nil {
 			log.Printf("Error updating card: %v", err)
 		}
 
@@ -306,10 +332,10 @@ func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
 
 	// 5. Load Next Card (Front Side Setup)
 	loadNextCard = func() {
-		card, err := db.GetNextDueCard(deckID)
+		card, err := ctx.DB.GetNextDueCard(deckID)
 		if err != nil {
 			log.Printf("No due cards: %v", err)
-			w.SetContent(container.NewCenter(widget.NewLabel("All caught up! No cards due for review.")))
+			ctx.Window.SetContent(container.NewCenter(widget.NewLabel("All caught up! No cards due for review.")))
 			return
 		}
 
@@ -340,11 +366,10 @@ func ShowPageFour(w fyne.Window, cfg *Config, db database.DB, deckID int) {
 		answerLabel,
 	)
 
-	layout := container.NewBorder(nil, bottomControls, nil, nil, container.NewCenter(centerContent))
-	w.SetContent(layout)
-
 	// Start first card
 	loadNextCard()
+
+	return container.NewBorder(nil, bottomControls, nil, nil, container.NewCenter(centerContent))
 }
 
 func DeckPopUpPage(w fyne.Window, db database.DB, onConfirm func(int)) {
