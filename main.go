@@ -43,8 +43,13 @@ func main() {
 	w := a.NewWindow("Audio SRS")
 	w.Resize(fyne.NewSize(900, 600))
 	cfg := NewConfig()
-	ShowPageTwo(w, cfg, *db)
-	// TODO: Added page navigation and a main page
+	ctx := AppContext{
+		Window: w,
+		DB:     *db,
+		Config: cfg,
+	}
+
+	SetupMainWindow(&ctx)
 	w.ShowAndRun()
 }
 
@@ -72,12 +77,17 @@ func SetupMainWindow(appCtx *AppContext) {
 		setPage(makePageThree(appCtx))
 	})
 
+	btnChooseFolder := widget.NewButton("Choose Library", func() {
+		chooseFolder(appCtx.Config, appCtx.Window)
+	})
+
 	// Sidebar container (VBox stacks items vertically)
 	sidebar := container.NewVBox(
 		widget.NewLabelWithStyle("Audio SRS", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		widget.NewSeparator(),
 		btnDecks,
 		btnBrowser,
+		btnChooseFolder,
 	)
 
 	// Wrap sidebar in a border to give it consistent padding or width if desired
@@ -85,7 +95,7 @@ func SetupMainWindow(appCtx *AppContext) {
 
 	// 3. Main Split View: Left = Sidebar, Right = Dynamic Content
 	mainLayout := container.NewHSplit(sidebarContainer, contentArea)
-	mainLayout.SetOffset(0.2) // Sidebar takes ~20% of width
+	mainLayout.SetOffset(0.2)
 
 	w.SetContent(mainLayout)
 
