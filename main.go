@@ -287,6 +287,8 @@ func makePageThree(ctx *AppContext) fyne.CanvasObject {
 }
 
 func makePageFour(ctx *AppContext, deckID int, navigate func(fyne.CanvasObject)) fyne.CanvasObject {
+	// TODO: Add music control funtionality
+
 	p := audio.NewPlayer()
 
 	var currentCard database.Card
