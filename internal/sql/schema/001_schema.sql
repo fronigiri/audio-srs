@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS cards (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     deck_id     INTEGER NOT NULL,
     audio_path  TEXT NOT NULL,
+    repetition  INTEGER NOT NULL DEFAULT 0, -- how man times this card has been reviewed
     interval    INTEGER NOT NULL DEFAULT 1,  -- days until next review
     ease_factor REAL NOT NULL DEFAULT 2.5,   -- SM-2 algorithm factor
     due_date    TEXT NOT NULL,               -- ISO 8601 date string
