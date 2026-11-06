@@ -286,6 +286,8 @@ func makePageThree(ctx *AppContext) fyne.CanvasObject {
 	return mainLayout
 }
 
+// SRS Page
+
 func makePageFour(ctx *AppContext, deckID int, navigate func(fyne.CanvasObject)) fyne.CanvasObject {
 	// TODO: Add music control funtionality
 
