@@ -312,11 +312,12 @@ func makePageFour(ctx *AppContext, deckID int, navigate func(fyne.CanvasObject))
 		p.Stop()
 
 		// Update card in SRS algorithm & DB
+		oldDue := currentCard.DueDate
 		srs.Review(&currentCard, rating)
 		if err := ctx.DB.UpdateCard(currentCard); err != nil {
 			log.Printf("Error updating card: %v", err)
 		}
-
+		log.Printf("Card ID %d rated. Old Due: %v -> New Due: %v", currentCard.ID, oldDue, currentCard.DueDate)
 		// Advance to next card
 		loadNextCard()
 	}

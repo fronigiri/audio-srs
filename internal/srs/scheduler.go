@@ -1,6 +1,10 @@
 package srs
 
-import "github.com/fronigiri/audio-srs/internal/database"
+import (
+	"time"
+
+	"github.com/fronigiri/audio-srs/internal/database"
+)
 
 func generateEase(card *database.Card, rating int) {
 	ef := card.EF + (0.1 - float64(5-rating)*(0.08+float64(5-rating)*0.02))
@@ -29,6 +33,7 @@ func generateInterval(card *database.Card, rating int) {
 
 func Review(card *database.Card, rating int) {
 	generateInterval(card, rating)
+	card.DueDate = time.Now().UTC().AddDate(0, 0, card.Interval)
 	card.Repetition++
 	generateEase(card, rating)
 }
