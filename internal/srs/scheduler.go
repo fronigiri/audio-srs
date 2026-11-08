@@ -33,7 +33,7 @@ func generateInterval(card *database.Card, rating int) {
 
 func Review(card *database.Card, rating int) {
 	generateInterval(card, rating)
-	card.DueDate = time.Now().UTC().AddDate(0, 0, card.Interval)
+	card.DueDate = time.Now().UTC().AddDate(0, 0, card.Interval) // Adds the generated interval to the card due date
 	card.Repetition++
 	generateEase(card, rating)
 }
