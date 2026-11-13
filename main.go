@@ -305,6 +305,10 @@ func makePageFour(ctx *AppContext, deckID int, navigate func(fyne.CanvasObject))
 		go p.PlayCard(currentCard)
 	})
 
+	backBtn := widget.NewButton("Back to Main Page", func() {
+		SetupMainWindow(ctx)
+	})
+
 	var loadNextCard func()
 
 	// 2. Rating handler (Back Side)
@@ -350,7 +354,7 @@ func makePageFour(ctx *AppContext, deckID int, navigate func(fyne.CanvasObject))
 		card, err := ctx.DB.GetNextDueCard(deckID)
 		if err != nil {
 			log.Printf("No due cards: %v", err)
-			ctx.Window.SetContent(container.NewCenter(widget.NewLabel("All caught up! No cards due for review.")))
+			ctx.Window.SetContent(container.NewVBox(widget.NewLabel("All caught up! No cards due for review."), backBtn))
 			return
 		}
 
