@@ -296,7 +296,6 @@ func makePageFour(ctx *AppContext, deckID int, navigate func(fyne.CanvasObject))
 	var currentCard database.Card
 
 	// 1. UI Labels
-	statusLabel := widget.NewLabel("")
 	answerLabel := widget.NewLabel("") // Displays answer/metadata on reveal
 	answerLabel.Hide()                 // Hidden initially
 
@@ -317,11 +316,11 @@ func makePageFour(ctx *AppContext, deckID int, navigate func(fyne.CanvasObject))
 
 		// Update card in SRS algorithm & DB
 		oldDue := currentCard.DueDate
+		log.Printf("Interval: %v Repetition: %v", currentCard.Interval, currentCard.Repetition)
 		srs.Review(&currentCard, rating)
 		if err := ctx.DB.UpdateCard(currentCard); err != nil {
 			log.Printf("Error updating card: %v", err)
 		}
-		log.Printf("Interval: %v Repetition: %v", currentCard.Interval, currentCard.Repetition)
 		log.Printf("Card ID %d rated. Old Due: %v -> New Due: %v", currentCard.ID, oldDue, currentCard.DueDate)
 		// Advance to next card
 		loadNextCard()
@@ -367,7 +366,7 @@ func makePageFour(ctx *AppContext, deckID int, navigate func(fyne.CanvasObject))
 			log.Printf("Error: Unable to scan metadata: %v", err)
 		}
 
-		statusLabel.SetText(fmt.Sprintf("Card ID: %d", card.ID))
+		//statusLabel.SetText(fmt.Sprintf("Card ID: %d", card.ID))
 		answerLabel.SetText(fmt.Sprintf("%s - %s", song.Title, song.Album)) // or card notes/title
 		answerLabel.Hide()
 
@@ -381,7 +380,6 @@ func makePageFour(ctx *AppContext, deckID int, navigate func(fyne.CanvasObject))
 
 	// 6. Layout
 	centerContent := container.NewVBox(
-		statusLabel,
 		replayBtn,
 		answerLabel,
 	)
