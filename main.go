@@ -53,6 +53,30 @@ func main() {
 	w.ShowAndRun()
 }
 
+func SetupKeybinds(w fyne.Window, player *audio.Player) {
+	w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
+		switch k.Name {
+		case fyne.KeySpace:
+			// Spacebar: Play / Pause
+			player.TogglePause()
+
+		case fyne.KeyR:
+			// 'R' key: Restart track from beginning
+			player.Restart()
+
+		// Optional SRS shortcuts: Numbers 1-4 to rate the card!
+		case fyne.Key1:
+			// handleRating(1)
+		case fyne.Key2:
+			// handleRating(2)
+		case fyne.Key3:
+			// handleRating(3)
+		case fyne.Key4:
+			// handleRating(4)
+		}
+	})
+}
+
 func SetupMainWindow(appCtx *AppContext) {
 	w := appCtx.Window
 	w.Resize(fyne.NewSize(900, 600))
@@ -335,7 +359,25 @@ func makePageFour(ctx *AppContext, deckID int, navigate func(fyne.CanvasObject))
 	ratingBar := container.New(layout.NewGridLayoutWithColumns(4),
 		btnAgain, btnHard, btnGood, btnEasy,
 	)
-	ratingBar.Hide() // Start hidden until user flips the card!
+	ratingBar.Hide()
+
+	// Keyboard Config
+	ctx.Window.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
+		switch k.Name {
+		case fyne.KeyM:
+			p.TogglePause()
+		case fyne.KeyH:
+			p.Restart()
+		case fyne.Key1:
+			handleRating(1) // Again
+		case fyne.Key2:
+			handleRating(2) // Hard
+		case fyne.Key3:
+			handleRating(3) // Good
+		case fyne.Key4:
+			handleRating(4) // Easy
+		}
+	})
 
 	// 4. "Show Answer" Button (Front side control)
 	var showAnswerBtn *widget.Button

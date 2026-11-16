@@ -19,11 +19,14 @@ import (
 )
 
 type Player struct {
-	Open   func(string) (*os.File, error)
-	Decode func(*os.File) (beep.StreamSeekCloser, beep.Format, error)
-	Play   func(beep.StreamSeekCloser, beep.Format) error
-	Cancel context.CancelFunc
-	Mu     sync.Mutex
+	Open     func(string) (*os.File, error)
+	Decode   func(*os.File) (beep.StreamSeekCloser, beep.Format, error)
+	Play     func(beep.StreamSeekCloser, beep.Format) error
+	Cancel   context.CancelFunc
+	Mu       sync.Mutex
+	Path     string
+	Streamer beep.StreamSeekCloser
+	Ctrl     *beep.Ctrl
 }
 
 func NewPlayer() Player {
@@ -103,4 +106,29 @@ func (p *Player) Stop() {
 
 	// speaker.Clear removes all audio streams from the speaker
 	speaker.Clear()
+}
+
+func (p *Player) Restart() {
+	p.Mu.Lock()
+	defer p.Mu.Unlock()
+
+	if p.Streamer != nil {
+		speaker.Lock()
+		// Seek(0) rewinds to sample 0
+		p.Streamer.Seek(0)
+		p.Ctrl.Paused = false // Ensure it's unpaused
+		speaker.Unlock()
+	}
+}
+
+// TogglePause flips between paused and playing
+func (p *Player) TogglePause() {
+	p.Mu.Lock()
+	defer p.Mu.Unlock()
+
+	if p.Ctrl != nil {
+		speaker.Lock()
+		p.Ctrl.Paused = !p.Ctrl.Paused
+		speaker.Unlock()
+	}
 }
