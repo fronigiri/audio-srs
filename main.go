@@ -371,11 +371,11 @@ func makePageFour(ctx *AppContext, deckID int, navigate func(fyne.CanvasObject))
 		case fyne.Key1:
 			handleRating(1) // Again
 		case fyne.Key2:
-			handleRating(2) // Hard
+			handleRating(3) // Hard
 		case fyne.Key3:
-			handleRating(3) // Good
+			handleRating(4) // Good
 		case fyne.Key4:
-			handleRating(4) // Easy
+			handleRating(5) // Easy
 		}
 	})
 

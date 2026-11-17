@@ -18,7 +18,7 @@ func generateEase(card *database.Card, rating int) {
 func generateInterval(card *database.Card, rating int) {
 	if rating < 3 {
 		card.Repetition = 0
-		card.Interval = 1
+		card.Interval = 0
 		return
 	}
 	switch card.Repetition {
@@ -33,7 +33,12 @@ func generateInterval(card *database.Card, rating int) {
 
 func Review(card *database.Card, rating int) {
 	generateInterval(card, rating)
-	card.DueDate = time.Now().UTC().AddDate(0, 0, card.Interval) // Adds the generated interval to the card due date
-	card.Repetition++
 	generateEase(card, rating)
+
+	if card.Interval == 0 {
+		card.DueDate = time.Now().UTC()
+	} else {
+		card.DueDate = time.Now().UTC().AddDate(0, 0, card.Interval)
+		card.Repetition++
+	}
 }
