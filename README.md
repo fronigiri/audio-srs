@@ -1,13 +1,13 @@
 # Audio SRS
 
-This program uses a Spaced Repetation System (srs) focused strickly around audio memorization.
+This program uses a Spaced Repetation System (srs) focused strickly around audio memorization entirely made in Go.
 
 # Commands
 
 (for study page)
 H - restarts track
 M - pause/play track
-1-4 - associated with each rating
+1-4 - asigned to each rating
 
 # Dependencies
 
@@ -16,4 +16,7 @@ M - pause/play track
 
 # Quick Start
 
-`go install https://github.com/fronigiri/audio-srs`
+``
+go install https://github.com/fronigiri/audio-srs
+
+``
