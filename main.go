@@ -446,9 +446,8 @@ func DeckPopUpPage(w fyne.Window, db database.DB, onConfirm func(int)) {
 
 	// 1. Prepare string slice for the dropdown options
 	deckNames := make([]string, len(deckList))
-	for i, name := range deckList {
-		deckNames[i] = name
-	}
+
+	copy(deckList, deckNames)
 
 	// 2. Create the dropdown selector
 	selectedName := deckNames[0]

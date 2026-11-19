@@ -19,32 +19,60 @@ import (
 )
 
 type Player struct {
-	Open     func(string) (*os.File, error)
-	Decode   func(*os.File) (beep.StreamSeekCloser, beep.Format, error)
-	Play     func(beep.StreamSeekCloser, beep.Format) error
-	Cancel   context.CancelFunc
-	Mu       sync.Mutex
-	Path     string
-	Streamer beep.StreamSeekCloser
-	Ctrl     *beep.Ctrl
+	Open        func(string) (*os.File, error)
+	Decode      func(*os.File) (beep.StreamSeekCloser, beep.Format, error)
+	Play        func(beep.StreamSeekCloser, beep.Format) error
+	Cancel      context.CancelFunc
+	Mu          sync.Mutex
+	Ctrl        *beep.Ctrl
+	Streamer    beep.StreamSeekCloser
+	Path        string
+	Initialized bool
 }
 
-func NewPlayer() Player {
-	return Player{
-		Open: os.Open,
-		Decode: func(f *os.File) (beep.StreamSeekCloser, beep.Format, error) {
-			return mp3.Decode(f)
-		},
-		Play: func(streamer beep.StreamSeekCloser, format beep.Format) error {
-			speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
-			done := make(chan bool)
-			speaker.Play(beep.Seq(streamer, beep.Callback(func() {
-				done <- true
-			})))
-			<-done
-			return nil
-		},
+func NewPlayer() *Player {
+	p := &Player{}
+
+	p.Play = func(streamer beep.StreamSeekCloser, format beep.Format) error {
+		p.Mu.Lock()
+		// 1. Only initialize the speaker once
+		if !p.Initialized {
+			err := speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
+			if err != nil {
+				p.Mu.Unlock()
+				return err
+			}
+			p.Initialized = true
+		}
+
+		// 2. Clear any old streams from the speaker
+		speaker.Clear()
+
+		// 3. Save references on p and wrap in beep.Ctrl
+		p.Streamer = streamer
+		p.Ctrl = &beep.Ctrl{Streamer: streamer, Paused: false}
+		p.Mu.Unlock()
+
+		done := make(chan bool)
+
+		// 4. Play p.ctrl through the speaker, not the raw streamer!
+		speaker.Play(beep.Seq(p.Ctrl, beep.Callback(func() {
+			done <- true
+		})))
+
+		// Block until finished or stopped
+		<-done
+
+		// Clean up references when track ends
+		p.Mu.Lock()
+		p.Ctrl = nil
+		p.Streamer = nil
+		p.Mu.Unlock()
+
+		return nil
 	}
+
+	return p
 }
 
 func (p *Player) DecodeFile(filePath string) (beep.StreamSeekCloser, beep.Format, *os.File, error) {
@@ -83,6 +111,7 @@ func (p *Player) PlayCard(c database.Card) error {
 	if err != nil {
 		return err
 	}
+
 	defer file.Close()
 	defer streamer.Close()
 
