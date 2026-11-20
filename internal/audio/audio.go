@@ -60,10 +60,8 @@ func NewPlayer() *Player {
 			done <- true
 		})))
 
-		// Block until finished or stopped
 		<-done
 
-		// Clean up references when track ends
 		p.Mu.Lock()
 		p.Ctrl = nil
 		p.Streamer = nil

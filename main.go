@@ -57,20 +57,19 @@ func SetupKeybinds(w fyne.Window, player *audio.Player) {
 	w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
 		switch k.Name {
 		case fyne.KeySpace:
-			// Spacebar: Play / Pause
+
 			player.TogglePause()
 
 		case fyne.KeyR:
-			// 'R' key: Restart track from beginning
+
 			player.Restart()
 
-		// Optional SRS shortcuts: Numbers 1-4 to rate the card!
 		case fyne.Key1:
-			// handleRating(1)
+
 		case fyne.Key2:
-			// handleRating(2)
+
 		case fyne.Key3:
-			// handleRating(3)
+
 		case fyne.Key4:
 			// handleRating(4)
 		}
