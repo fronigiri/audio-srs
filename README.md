@@ -4,10 +4,11 @@ This program uses a Spaced Repetation System (srs) focused strickly around audio
 
 # Commands
 
-(for study page)
-H - restarts track
-M - pause/play track
-1-4 - asigned to each rating
+(for study page):
+
+- H - restarts track
+- M - pause/play track
+- 1-4 - asigned to each rating
 
 # Dependencies
 
