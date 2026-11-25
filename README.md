@@ -16,7 +16,4 @@ M - pause/play track
 
 # Quick Start
 
-``
-go install https://github.com/fronigiri/audio-srs
-
-``
+`go install https://github.com/fronigiri/audio-srs`
